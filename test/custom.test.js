@@ -149,7 +149,7 @@ describe('Combined_Custom_Test_ZKU', function () {
       const tornadoPool_tokens = await token.balanceOf(tornadoPool.address)
       const expected_remainder = utils.parseEther('0.03')
       expect(tornadoPool_tokens).to.be.equal(expected_remainder)
-      console.log('the pool has the remaining WETH deposit tokens:', expected_remainder)
+      console.log('the pool has the remaining WETH deposit tokens:', expected_remainder - 0)
     })
   })
 })
