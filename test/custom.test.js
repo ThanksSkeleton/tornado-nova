@@ -90,8 +90,8 @@ describe('Combined_Custom_Test_ZKU', function () {
     it('TreeTest_AND_L1L2Test', async () => {
       const { merkleTreeWithHistory } = await loadFixture(fixture_tree)
       const insertion_gas = await merkleTreeWithHistory.estimateGas.insert(toFixedHex(123), toFixedHex(456))
-      console.log('insertion gas total ', insertion_gas - 21000)
-      console.log('insertion gas only insertion ', insertion_gas - 0)
+      console.log('insertion gas total ', insertion_gas - 0)
+      console.log('insertion gas only insertion ', insertion_gas - 21000)
 
       const { tornadoPool, token, omniBridge } = await loadFixture(fixture_tornado)
       const aliceKeypair = new Keypair() // contains private and public keys
@@ -141,9 +141,14 @@ describe('Combined_Custom_Test_ZKU', function () {
       const recipientBalance = await token.balanceOf(recipient)
       expect(recipientBalance).to.be.equal(aliceWithdrawAmount)
       console.log('alice now has these many WETH tokens:', recipientBalance - 0)
-      const omniBridgeBalance = await token.balanceOf(omniBridge.address)
-      expect(omniBridgeBalance).to.be.equal(0)
+	  
+      const omniBridgeBalance_tokens = await token.balanceOf(omniBridge.address)
+      expect(omniBridgeBalance_tokens).to.be.equal(0)
       console.log('the bridge has no tokens')
+	  
+      const tornadoPool_tokens = await token.balanceOf(tornadoPool.address)
+      expect(tornadoPool_tokens).to.be.equal(utils.parseEther('10000'))
+      console.log('the pool has the starting number of tokens:', 10000)
     })
   })
 })
