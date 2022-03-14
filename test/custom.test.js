@@ -5,12 +5,10 @@ const { expect } = require('chai')
 
 const { utils } = ethers
 
-const { poseidonHash2, toFixedHex } = require('../src/utils')
-
-const MerkleTree = require('fixed-merkle-tree')
+const { toFixedHex } = require('../src/utils')
 
 const Utxo = require('../src/utxo')
-const { transaction, registerAndTransact, prepareTransaction, buildMerkleTree } = require('../src/index')
+const { transaction, prepareTransaction } = require('../src/index')
 const { Keypair } = require('../src/keypair')
 const { encodeDataForBridge } = require('./utils')
 
@@ -28,10 +26,6 @@ describe('Combined_Custom_Test_ZKU', function () {
     return instance.deployed()
   }
 
-  function getNewTree() {
-    return new MerkleTree(MERKLE_TREE_HEIGHT, [], { hashFunction: poseidonHash2 })
-  }
-
   async function fixture_tree() {
     require('../scripts/compileHasher')
     const hasher = await deploy('Hasher')
@@ -43,7 +37,7 @@ describe('Combined_Custom_Test_ZKU', function () {
     await merkleTreeWithHistory.initialize()
     return { hasher, merkleTreeWithHistory }
   }
-  
+
   async function fixture_tornado() {
     require('../scripts/compileHasher')
     const [sender, gov, l1Unwrapper, multisig] = await ethers.getSigners()
@@ -94,60 +88,60 @@ describe('Combined_Custom_Test_ZKU', function () {
 
   describe('Custom Combined Test', () => {
     it('TreeTest_AND_L1L2Test', async () => {
-    const { merkleTreeWithHistory } = await loadFixture(fixture_tree)
-    const insertion_gas = merkleTreeWithHistory.estimateGas.insert(toFixedHex(123), toFixedHex(456))
-    console.log('insertion gas total ', insertion_gas - 21000)
-    console.log('insertion gas only insertion ', insertion_gas)
+      const { merkleTreeWithHistory } = await loadFixture(fixture_tree)
+      const insertion_gas = merkleTreeWithHistory.estimateGas.insert(toFixedHex(123), toFixedHex(456))
+      console.log('insertion gas total ', insertion_gas - 21000)
+      console.log('insertion gas only insertion ', insertion_gas)
 
-    const { tornadoPool, token, omniBridge } = await loadFixture(fixture_tornado)
-    const aliceKeypair = new Keypair() // contains private and public keys
+      const { tornadoPool, token, omniBridge } = await loadFixture(fixture_tornado)
+      const aliceKeypair = new Keypair() // contains private and public keys
 
-    // Alice deposits into tornado pool
-    const aliceDepositAmount = utils.parseEther('0.07')
-    const aliceDepositUtxo = new Utxo({ amount: aliceDepositAmount, keypair: aliceKeypair })
-    const { args, extData } = await prepareTransaction({
-      tornadoPool,
-      outputs: [aliceDepositUtxo],
-    })
+      // Alice deposits into tornado pool
+      const aliceDepositAmount = utils.parseEther('0.07')
+      const aliceDepositUtxo = new Utxo({ amount: aliceDepositAmount, keypair: aliceKeypair })
+      const { args, extData } = await prepareTransaction({
+        tornadoPool,
+        outputs: [aliceDepositUtxo],
+      })
 
-    const onTokenBridgedData = encodeDataForBridge({
-      proof: args,
-      extData,
-    })
+      const onTokenBridgedData = encodeDataForBridge({
+        proof: args,
+        extData,
+      })
 
-    const onTokenBridgedTx = await tornadoPool.populateTransaction.onTokenBridged(
-      token.address,
-      aliceDepositUtxo.amount,
-      onTokenBridgedData,
-    )
-    // emulating bridge. first it sends tokens to omnibridge mock then it sends to the pool
-    await token.transfer(omniBridge.address, aliceDepositAmount)
-    const transferTx = await token.populateTransaction.transfer(tornadoPool.address, aliceDepositAmount)
+      const onTokenBridgedTx = await tornadoPool.populateTransaction.onTokenBridged(
+        token.address,
+        aliceDepositUtxo.amount,
+        onTokenBridgedData,
+      )
+      // emulating bridge. first it sends tokens to omnibridge mock then it sends to the pool
+      await token.transfer(omniBridge.address, aliceDepositAmount)
+      const transferTx = await token.populateTransaction.transfer(tornadoPool.address, aliceDepositAmount)
 
-    await omniBridge.execute([
-      { who: token.address, callData: transferTx.data }, // send tokens to pool
-      { who: tornadoPool.address, callData: onTokenBridgedTx.data }, // call onTokenBridgedTx
-    ])
+      await omniBridge.execute([
+        { who: token.address, callData: transferTx.data }, // send tokens to pool
+        { who: tornadoPool.address, callData: onTokenBridgedTx.data }, // call onTokenBridgedTx
+      ])
 
-    // withdraws a part of his funds from the shielded pool
-    const aliceWithdrawAmount = utils.parseEther('0.06')
-    const recipient = '0xDeaD00000000000000000000000000000000BEEf'
-    const aliceChangeUtxo = new Utxo({
-      amount: aliceDepositAmount.sub(aliceWithdrawAmount),
-      keypair: aliceKeypair,
-    })
-    await transaction({
-      tornadoPool,
-      inputs: [aliceDepositUtxo],
-      outputs: [aliceChangeUtxo],
-      recipient: recipient,
-      isL1Withdrawal: true,
-    })
+      // withdraws a part of his funds from the shielded pool
+      const aliceWithdrawAmount = utils.parseEther('0.06')
+      const recipient = '0xDeaD00000000000000000000000000000000BEEf'
+      const aliceChangeUtxo = new Utxo({
+        amount: aliceDepositAmount.sub(aliceWithdrawAmount),
+        keypair: aliceKeypair,
+      })
+      await transaction({
+        tornadoPool,
+        inputs: [aliceDepositUtxo],
+        outputs: [aliceChangeUtxo],
+        recipient: recipient,
+        isL1Withdrawal: true,
+      })
 
-    const recipientBalance = await token.balanceOf(recipient)
-    expect(recipientBalance).to.be.equal(0)
-    const omniBridgeBalance = await token.balanceOf(omniBridge.address)
-    expect(omniBridgeBalance).to.be.equal(aliceWithdrawAmount)
+      const recipientBalance = await token.balanceOf(recipient)
+      expect(recipientBalance).to.be.equal(0)
+      const omniBridgeBalance = await token.balanceOf(omniBridge.address)
+      expect(omniBridgeBalance).to.be.equal(aliceWithdrawAmount)
     })
   })
 })
