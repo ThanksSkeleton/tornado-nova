@@ -139,7 +139,7 @@ describe('Combined_Custom_Test_ZKU', function () {
       })
 
       const recipientBalance = await token.balanceOf(recipient)
-      expect(recipientBalance).to.be.equal(0.05)
+      expect(recipientBalance).to.be.equal(aliceWithdrawAmount)
       const omniBridgeBalance = await token.balanceOf(omniBridge.address)
       expect(omniBridgeBalance).to.be.equal(0)
     })
