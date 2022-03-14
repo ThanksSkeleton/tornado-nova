@@ -89,7 +89,7 @@ describe('Combined_Custom_Test_ZKU', function () {
   describe('Custom Combined Test', () => {
     it('TreeTest_AND_L1L2Test', async () => {
       const { merkleTreeWithHistory } = await loadFixture(fixture_tree)
-      const insertion_gas = merkleTreeWithHistory.estimateGas.insert(toFixedHex(123), toFixedHex(456))
+      const insertion_gas = await merkleTreeWithHistory.estimateGas.insert(toFixedHex(123), toFixedHex(456))
       console.log('insertion gas total ', insertion_gas - 21000)
       console.log('insertion gas only insertion ', insertion_gas)
 
@@ -97,7 +97,7 @@ describe('Combined_Custom_Test_ZKU', function () {
       const aliceKeypair = new Keypair() // contains private and public keys
 
       // Alice deposits into tornado pool
-      const aliceDepositAmount = utils.parseEther('0.07')
+      const aliceDepositAmount = utils.parseEther('0.08')
       const aliceDepositUtxo = new Utxo({ amount: aliceDepositAmount, keypair: aliceKeypair })
       const { args, extData } = await prepareTransaction({
         tornadoPool,
@@ -123,8 +123,8 @@ describe('Combined_Custom_Test_ZKU', function () {
         { who: tornadoPool.address, callData: onTokenBridgedTx.data }, // call onTokenBridgedTx
       ])
 
-      // withdraws a part of his funds from the shielded pool
-      const aliceWithdrawAmount = utils.parseEther('0.06')
+      // Alice withdraws WETH tokens from L2
+      const aliceWithdrawAmount = utils.parseEther('0.05')
       const recipient = '0xDeaD00000000000000000000000000000000BEEf'
       const aliceChangeUtxo = new Utxo({
         amount: aliceDepositAmount.sub(aliceWithdrawAmount),
@@ -135,13 +135,13 @@ describe('Combined_Custom_Test_ZKU', function () {
         inputs: [aliceDepositUtxo],
         outputs: [aliceChangeUtxo],
         recipient: recipient,
-        isL1Withdrawal: true,
+        isL1Withdrawal: false,
       })
 
       const recipientBalance = await token.balanceOf(recipient)
-      expect(recipientBalance).to.be.equal(0)
+      expect(recipientBalance).to.be.equal('0.05')
       const omniBridgeBalance = await token.balanceOf(omniBridge.address)
-      expect(omniBridgeBalance).to.be.equal(aliceWithdrawAmount)
+      expect(omniBridgeBalance).to.be.equal('0')
     })
   })
 })
