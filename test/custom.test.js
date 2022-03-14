@@ -91,7 +91,7 @@ describe('Combined_Custom_Test_ZKU', function () {
       const { merkleTreeWithHistory } = await loadFixture(fixture_tree)
       const insertion_gas = await merkleTreeWithHistory.estimateGas.insert(toFixedHex(123), toFixedHex(456))
       console.log('insertion gas total ', insertion_gas - 21000)
-      console.log('insertion gas only insertion ', insertion_gas)
+      console.log('insertion gas only insertion ', insertion_gas - 0)
 
       const { tornadoPool, token, omniBridge } = await loadFixture(fixture_tornado)
       const aliceKeypair = new Keypair() // contains private and public keys
@@ -123,9 +123,9 @@ describe('Combined_Custom_Test_ZKU', function () {
         { who: tornadoPool.address, callData: onTokenBridgedTx.data }, // call onTokenBridgedTx
       ])
 
-      // Alice withdraws WETH tokens from L2
+      // Alice withdraws WETH tokens from L2 to recipient 0x111...
       const aliceWithdrawAmount = utils.parseEther('0.05')
-      const recipient = '0xDeaD00000000000000000000000000000000BEEf'
+      const recipient = '0x1111111111111111111111111111111111111111'
       const aliceChangeUtxo = new Utxo({
         amount: aliceDepositAmount.sub(aliceWithdrawAmount),
         keypair: aliceKeypair,
@@ -140,8 +140,10 @@ describe('Combined_Custom_Test_ZKU', function () {
 
       const recipientBalance = await token.balanceOf(recipient)
       expect(recipientBalance).to.be.equal(aliceWithdrawAmount)
+      console.log('alice now has these many WETH tokens:', recipientBalance - 0)
       const omniBridgeBalance = await token.balanceOf(omniBridge.address)
       expect(omniBridgeBalance).to.be.equal(0)
+      console.log('the bridge has no tokens')
     })
   })
 })
