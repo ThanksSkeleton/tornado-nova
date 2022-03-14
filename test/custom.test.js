@@ -141,11 +141,11 @@ describe('Combined_Custom_Test_ZKU', function () {
       const recipientBalance = await token.balanceOf(recipient)
       expect(recipientBalance).to.be.equal(aliceWithdrawAmount)
       console.log('alice now has these many WETH tokens:', recipientBalance - 0)
-	  
+
       const omniBridgeBalance_tokens = await token.balanceOf(omniBridge.address)
       expect(omniBridgeBalance_tokens).to.be.equal(0)
       console.log('the bridge has no tokens')
-	  
+
       const tornadoPool_tokens = await token.balanceOf(tornadoPool.address)
       expect(tornadoPool_tokens).to.be.equal(utils.parseEther('10000'))
       console.log('the pool has the starting number of tokens:', 10000)
