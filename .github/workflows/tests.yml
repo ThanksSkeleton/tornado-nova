@@ -1,0 +1,20 @@
+name: tests
+
+on:
+  push:
+    branches: ['*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14
+      - run: yarn cache clean --all
+      - run: yarn install --network-concurrency 1
+      - run: yarn lint
+      - run: yarn build
+      - run: yarn test
