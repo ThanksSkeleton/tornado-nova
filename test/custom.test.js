@@ -147,8 +147,8 @@ describe('Combined_Custom_Test_ZKU', function () {
       console.log('the bridge has no tokens')
 
       const tornadoPool_tokens = await token.balanceOf(tornadoPool.address)
-      expect(tornadoPool_tokens).to.be.equal(utils.parseEther('10000'))
-      console.log('the pool has the starting number of tokens:', 10000)
+      expect(tornadoPool_tokens).to.be.equal(aliceDepositAmount-aliceWithdrawAmount)
+      console.log('the pool has the remaining WETH deposit tokens', (aliceDepositAmount-aliceWithdrawAmount))
     })
   })
 })
